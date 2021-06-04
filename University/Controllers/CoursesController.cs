@@ -20,34 +20,50 @@ namespace ContosoUniversity.Controllers
         }
 
         // GET: Courses
-        public async Task<IActionResult> Index(string sortOrder, string searchString)
+        public async Task<IActionResult> Index(
+            string sortOrder,
+            string currentFilter,
+            string searchString,
+            int? pageNumber)
         {
+            ViewData["CurrentSort"] = sortOrder;
             ViewData["NameSortParm"] = String.IsNullOrEmpty(sortOrder) ? "title_desc" : "";
             ViewData["DateSortParm"] = sortOrder == "credits" ? "credits_desc" : "credits";
             ViewData["CurrentFilter"] = searchString;
-            var Courses = from c in _context.Courses
+
+            if (searchString != null)
+            {
+                pageNumber = 1;
+            }
+            else
+            {
+                searchString = currentFilter;
+            }
+
+            var courses = from c in _context.Courses
                           select c;
 
             if (!String.IsNullOrEmpty(searchString))
             {
-                Courses = Courses.Where(c => c.Title.Contains(searchString));
+                courses = courses.Where(c => c.Title.Contains(searchString));
             }
             switch (sortOrder)
             {
                 case "title_desc":
-                    Courses = Courses.OrderByDescending(c => c.Title);
+                    courses = courses.OrderByDescending(c => c.Title);
                     break;
                 case "credits":
-                    Courses = Courses.OrderBy(c => c.Credits);
+                    courses = courses.OrderBy(c => c.Credits);
                     break;
                 case "credits_desc":
-                    Courses = Courses.OrderByDescending(c => c.Credits);
+                    courses = courses.OrderByDescending(c => c.Credits);
                     break;
                 default:
-                    Courses = Courses.OrderBy(c => c.Title);
+                    courses = courses.OrderBy(c => c.Title);
                     break;
             }
-            return View(await Courses.AsNoTracking().ToListAsync());
+            int pageSize = 3;
+            return View(await ContosoUniversity.PaginatedList<Course>.CreateAsync(courses.AsNoTracking(), pageNumber ?? 1, pageSize));
         }
 
         // GET: Courses/Details/5
@@ -59,7 +75,8 @@ namespace ContosoUniversity.Controllers
             }
 
             var course = await _context.Courses
-                .FirstOrDefaultAsync(m => m.CourseID == id);
+            .AsNoTracking()
+            .FirstOrDefaultAsync(m => m.CourseID == id);
             if (course == null)
             {
                 return NotFound();

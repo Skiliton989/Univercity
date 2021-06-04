@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
 
 namespace ContosoUniversity.Models
 {
@@ -11,5 +13,7 @@ namespace ContosoUniversity.Models
         public int Credits { get; set; }
 
         public ICollection<Enrollment> Enrollments { get; set; }
+
+        
     }
 }
